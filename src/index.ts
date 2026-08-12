@@ -2,7 +2,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { errorHandler } from "./middlewares/errorHandler";
-import productroutes from "./routes/product.routes";
+import productRoutes from "./routes/product.routes";
+import orderRoutes from "./routes/order.routes";
 
 dotenv.config();
 
@@ -13,7 +14,8 @@ app.use(express.json());
 app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
 app.use(errorHandler);
 
-app.use("/products", productroutes);
+app.use("/products", productRoutes);
+app.use("/orders", orderRoutes);
 
 const PORT = process.env.PORT || 3000;
 

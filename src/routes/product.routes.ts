@@ -4,7 +4,7 @@ import {
   getProducts,
   updateProduct,
   deleteProduct,
-} from "../controllers/product.contoller";
+} from "../controllers/product.controller";
 import { authenticate, requireRole } from "../middlewares/auth";
 
 const router = Router();
