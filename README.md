@@ -114,6 +114,15 @@ The database transaction is independent of the notification, so a notification f
 
 For a larger production system, I would replace this with a durable queue such as RabbitMQ, SQS or BullMQ.
 
+### 🛡️ Security & Row Level Security (A6)
+Strict Row Level Security (RLS) is enforced directly at the PostgreSQL level, completely isolating tenant data[cite: 2]. The Express backend injects the authenticated user's JWT into the Supabase client per request, ensuring the database natively evaluates the policies.
+
+**Key RLS Enforcements:**
+*   **Seller Isolation:** A seller can only manage resources linked to their own `store_id`. If Seller A attempts to `PATCH` or `DELETE` Seller B's product via a direct API call, the database evaluates `auth.uid() = seller_id` and silently returns no rows, resulting in a 404[cite: 2]. 
+*   **Order & Inventory Protection:** There are **no** `INSERT` or `UPDATE` policies for customers or sellers on the `orders`, `order_items`, or `inventory` tables. Only the Node.js backend—using the administrative Service Role Key—is permitted to modify these tables during the atomic checkout transaction. This guarantees a client cannot bypass the server's price integrity by manipulating database rows directly[cite: 2].
+
+All policies are available in the repository under `supabase/migrations/002_rls_policies.sql`[cite: 2].
+
 ## Testing
 
 The automated tests cover the core scenarios from the assessment, including:

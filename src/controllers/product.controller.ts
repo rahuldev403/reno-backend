@@ -65,9 +65,9 @@ export const getProducts = async (
       min_price,
       max_price,
       available,
-      sort = "create_at",
+      sort = "created_at",
       order = "desc",
-    } = req.body;
+    } = req.query || {};
 
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
@@ -144,6 +144,7 @@ export const updateProduct = async (
   }
 };
 
+// DELETE /products/:id - Delete product
 export const deleteProduct = async (
   req: Request,
   res: Response,
@@ -151,12 +152,21 @@ export const deleteProduct = async (
 ) => {
   try {
     const { id } = req.params;
-
-    const { error, count } = await supabase
+    const userClient = getAuthClient(req);
+    const { error, count } = await userClient
       .from("products")
       .delete({ count: "exact" })
       .eq("id", id);
-    if (error) throw new ApiError(500, error.message);
+
+    if (error) {
+      if (error.code === "23503") {
+        throw new ApiError(
+          409,
+          "Cannot delete a product that has been ordered. Please archive it instead.",
+        );
+      }
+      throw new ApiError(500, error.message);
+    }
     if (count === 0)
       throw new ApiError(404, "Product not found or unauthorized");
 

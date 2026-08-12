@@ -12,10 +12,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
-app.use(errorHandler);
 
 app.use("/products", productRoutes);
 app.use("/orders", orderRoutes);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
