@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError";
-import { supabase } from "../config/supabase";
+import { supabaseAdmin } from "../config/supabase";
 import { orderEvents } from "../services/events";
 
-export const createOrder = (
+export const createOrder = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -24,7 +24,7 @@ export const createOrder = (
       quantity: item.quantity,
     }));
 
-    const { data, error } = await supabase.rpc("process_order", {
+    const { data, error } = await supabaseAdmin.rpc("process_order", {
       p_customer_id: customerId,
       p_idempotency_key: idempotencyKey,
       p_items: payloadItems,

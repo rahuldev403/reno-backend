@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { supabase } from "../config/supabase";
+import { supabase, supabaseAdmin } from "../config/supabase";
 import { ApiError } from "../utils/ApiError";
 
 // Extend Express Request to include the validated user context
@@ -32,8 +32,7 @@ export const authenticate = async (
     if (authError || !authData.user) {
       throw new ApiError(401, "Unauthenticated");
     }
-    
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("role")
       .eq("id", authData.user.id)

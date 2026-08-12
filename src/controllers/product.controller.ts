@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { supabase } from "../config/supabase";
+import { supabase, getAuthClient, supabaseAdmin } from "../config/supabase";
 import { ApiError } from "../utils/ApiError";
 
 export const createProduct = async (
@@ -10,18 +10,22 @@ export const createProduct = async (
   try {
     const { title, description, category, price_amount, currency } = req.body;
     const sellerId = req.user?.id;
+    const userClient = getAuthClient(req);
+
     if (!title || !category || price_amount === undefined) {
-      throw new ApiError(400, "Title,category,and price_amount are required");
+      throw new ApiError(400, "Title, category, and price_amount are required");
     }
-    const { data: store, error: storeError } = await supabase
+    const { data: store, error: storeError } = await userClient
       .from("stores")
       .select("id")
       .eq("seller_id", sellerId)
-      .single();
+      .maybeSingle();
+
     if (storeError || !store) {
       throw new ApiError(404, "Store not found for this seller");
     }
-    const { data: product, error: productError } = await supabase
+
+    const { data: product, error: productError } = await userClient
       .from("products")
       .insert({
         store_id: store.id,
@@ -35,11 +39,13 @@ export const createProduct = async (
       .single();
 
     if (productError) throw new ApiError(500, productError.message);
-
-    const { error: inventoryError } = await supabase
+    const { error: inventoryError } = await supabaseAdmin
       .from("inventory")
-      .insert({ product_id: product.id, quanity: 0 });
+      .insert({ product_id: product.id, quantity: 0 });
+
     if (inventoryError) throw new ApiError(500, inventoryError.message);
+
+    res.status(201).json({ data: product });
   } catch (error) {
     next(error);
   }
@@ -54,7 +60,7 @@ export const getProducts = async (
     const {
       page = "1",
       limit = "20",
-      serach,
+      search,
       category,
       min_price,
       max_price,
@@ -121,13 +127,13 @@ export const updateProduct = async (
   try {
     const { id } = req.params;
     const updates = req.body;
-
-    const { data, error } = await supabase
+    const userClient = getAuthClient(req);
+    const { data, error } = await userClient
       .from("products")
       .update(updates)
       .eq("id", id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw new ApiError(500, error.message);
     if (!data) throw new ApiError(404, "Product not found or unauthorized");
