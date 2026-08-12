@@ -14,3 +14,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+
+//P!sTc5wKJkf2Wj4
