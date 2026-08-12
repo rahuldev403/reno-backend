@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError";
 import { supabase } from "../config/supabase";
+import { orderEvents } from "../services/events";
 
 export const createOrder = (
   req: Request,
@@ -35,6 +36,10 @@ export const createOrder = (
       }
       throw new ApiError(400, error.message);
     }
+    orderEvents.emit("ORDER_CREATED", {
+      orderId: data.order_id,
+      timeStamp: new Date().toISOString(),
+    });
     res.status(201).json({ data });
   } catch (error) {
     next(error);
