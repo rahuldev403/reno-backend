@@ -1,0 +1,224 @@
+{
+  "info": {
+    "name": "Reneo Backend API",
+    "description": "API collection for the Reneo backend developer internship assessment. Includes Product and Order management with role-based access control.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "sellerToken",
+      "value": "your_seller_jwt_here",
+      "type": "string"
+    },
+    {
+      "key": "customerToken",
+      "value": "your_customer_jwt_here",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "uuid_of_a_product_here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Products (Seller & Public)",
+      "item": [
+        {
+          "name": "Search & List Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?page=1&limit=20&search=laptop&category=Electronics&available=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "laptop",
+                  "description": "Full-text search query"
+                },
+                {
+                  "key": "category",
+                  "value": "Electronics"
+                },
+                {
+                  "key": "available",
+                  "value": "true",
+                  "description": "Filter by in-stock items"
+                }
+              ]
+            },
+            "description": "Public endpoint to search and paginate products."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{sellerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Dell XPS 15\",\n    \"description\": \"High performance laptop for professionals.\",\n    \"category\": \"Electronics\",\n    \"price_amount\": 1500000,\n    \"currency\": \"XAF\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"]
+            },
+            "description": "Requires SELLER role. Creates a new product and initializes inventory."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{sellerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Dell XPS 15 (Updated)\",\n    \"price_amount\": 1450000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "{{productId}}"]
+            },
+            "description": "Requires SELLER role. Updates product details. Blocked by RLS if seller doesn't own it."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{sellerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "{{productId}}"]
+            },
+            "description": "Requires SELLER role. Deletes a product."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders (Customer)",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-idempotency-key",
+                "value": "order-req-12345",
+                "type": "text",
+                "description": "Required for idempotency"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"items\": [\n        {\n            \"product_id\": \"{{productId}}\",\n            \"quantity\": 2\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Requires CUSTOMER role. Backend strictly owns the pricing and logic. Handles concurrency natively via database row locks."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Verify the server is running."
+      },
+      "response": []
+    }
+  ]
+}
